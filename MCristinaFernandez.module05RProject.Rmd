@@ -19,7 +19,7 @@ Your company is currently a small company but is expanding rapidly.
 ```{r}
 require("tidyverse")
 require("dplyr")
-ds_salaries <- read.csv("C:/Users/crisf/OneDrive/Documents/DSE5002/project_1/r project data.csv")
+ds_salaries <- read.csv("C:/Users/crisf/Documents/DSE5002/project_1/r project data.csv")
 view(ds_salaries)
 ```
 
@@ -50,6 +50,7 @@ salary_by_experience <- ds_salaries %>%
 
 print(salary_by_experience)
 ```
+
 ```{r}
 ggplot(salary_by_experience, aes(x = experience_level, y = avg_salary, fill = experience_level)) +
   geom_col() +
@@ -57,6 +58,7 @@ ggplot(salary_by_experience, aes(x = experience_level, y = avg_salary, fill = ex
        x = "Experience Level",
        y = "Salary (USD)")
 ```
+
 ```{r}
 # Next, I want to see whether employment type influences salaries
 # PT Part-time / FT Full-time / CT Contract / FL Freelance
@@ -72,6 +74,7 @@ salary_by_employment <- ds_salaries %>%
 
 print(salary_by_employment)
 ```
+
 ```{r}
 ggplot(salary_by_employment, aes(x = employment_type, y = avg_salary, fill = employment_type)) +
   geom_col() +
@@ -79,6 +82,7 @@ ggplot(salary_by_employment, aes(x = employment_type, y = avg_salary, fill = emp
        x = "Employment Type",
        y = "Salary (USD)")
 ```
+
 ```{r}
 # How might the size of the company influence salaries?
 
@@ -116,25 +120,29 @@ salary_by_remote_ratio <- ds_salaries %>%
 print(salary_by_remote_ratio)
 
 ```
+
 ```{r}
 ggplot(salary_by_remote_ratio, aes(x = remote_ratio, y = avg_salary, fill = remote_ratio)) +
   geom_col() +
   labs(title = "Average Salary by Remote Ratio",
        x = "Remote Ratio",
-       y = "Salary (USD)")
+       y = "Salary (USD)") +
+  scale_y_continuous(labels = function(x) format(x, big.mark = ",", scientific = FALSE)) 
+# I didn't like the scientific notation so I asked ChatGPT how to change that
 
 ggplot(salary_by_remote_ratio, aes(x = remote_ratio, y = avg_salary, fill = remote_ratio)) +
   geom_col() +
   geom_point(aes(y = min_salary), color = "yellow") +  
   geom_point(aes(y = max_salary), color = "green") +  
-  geom_point(aes(y = median_salary), color = "orange") 
+  geom_point(aes(y = median_salary), color = "orange") +
   labs(title = "Average Salary by Remote Ratio with Min, Max, and Median",
        x = "Remote Ratio (%)",
-       y = "Salary (USD)")
-
-
+       y = "Salary (USD)") +
+  scale_y_continuous(labels = function(x) format(x, big.mark = ",", scientific = FALSE))
+ 
 # That's not how I thought the salaries would trend!
 ```
+
 ```{r}
 # Does employee residence factor into salaries?
 salary_by_residence <- ds_salaries %>%
@@ -177,6 +185,7 @@ ggplot(top_50_salaries, aes(x = reorder(employee_residence, salary_in_usd), y = 
 #I don't think I gleaned anything useful from this, but I'll keep it in here, just the same.
 
 ```
+
 ```{r}
 # Looking at just the countries with the highest average salary
 
@@ -190,6 +199,7 @@ ggplot(top_10_salaries, aes(x = reorder(employee_residence, avg_salary), y = avg
        x = "Employee Residence",
        y = "Salary (USD)")
 ```
+
 ```{r}
 # Now I'm just being nosy
 
@@ -253,9 +263,9 @@ ggplot(salary_by_job_title, aes(x = job_title, y = avg_salary, fill = job_title)
        x = "Job Title",
        y = "Salary (USD)")
 
-#I can't really tell by this graph
-#Also didn't realize there were so many job titles
-#I think cleaning this data is a little beyond my scope at the moment
+# I can't really tell by this graph
+# Also didn't realize there were so many job titles
+# I think cleaning this data is a little beyond my scope at the moment
 ```
 ```{r}
 # I asked ChatGPT for alternative ways to display this data
@@ -290,14 +300,16 @@ ggplot(salary_by_year, aes(x = work_year, y = avg_salary)) +
 
 # and that is a massive leap from 2021 to 2022!
 ```
+
 ```{r}
 # I wanted to create a plot that also showed the minimum, maximum, and median salaries, so I consulted about this one
 # The change in average salary doesn't look as severe with this view because of the inclusion of the max salaries
 # There was one individual who make $600k in 2021
 # It is interesting to see that, while the average salaries are highest in 2022, the maximum salaries are the lowest of the 3 years 
+# Viewing the data this way shows that the overall upward trend in salaries isn't as steep as it looked in the plot above, when we were only looking at the year
 
 ggplot(salary_by_year, aes(x = work_year)) +
-  geom_line(aes(y = avg_salary, color = "Average Salary"), size = 1) +   
+  geom_line(aes(y = avg_salary, color = "Average Salary"), linewidth = 1) +   
   geom_point(aes(y = min_salary, color = "Min Salary")) + 
   geom_point(aes(y = max_salary, color = "Max Salary")) +  
   geom_point(aes(y = median_salary, color = "Median Salary")) + 
@@ -308,5 +320,48 @@ ggplot(salary_by_year, aes(x = work_year)) +
   scale_color_manual(values = c("Average Salary" = "blue", 
                                 "Min Salary" = "orange", 
                                 "Max Salary" = "green", 
-                                "Median Salary" = "purple"))
+                                "Median Salary" = "purple")) +
+  scale_y_continuous(labels = function(x) format(x, big.mark = ",", scientific = FALSE))
+```
+
+```{r}
+# I want to consolidate some of the information I'd gathered from above
+# This one is supposed to show the average salaries by the experience level over time
+ggplot(ds_salaries, aes(x = work_year, y = salary_in_usd, color = experience_level)) +
+  geom_line(stat = "summary", fun = "mean", size = 1) +  
+  labs(
+    title = "Average Salary Over Time by Experience Level",
+    x = "Work Year",
+    y = "Average Salary (USD)",
+    color = "Experience Level"
+  )
+```
+
+```{r}
+# I wanted to take a look at this same information broken down a little further
+# Clearly, I asked ChatGPT for help with this one, too, because I couldn't make it work on my own and never would have figured this out
+# But I wanted to see the salary trends for each experience level a little more closely so we can make some business decisions that way
+
+
+ggplot(ds_salaries, aes(x = work_year, y = salary_in_usd, color = experience_level)) +
+  geom_line(stat = "summary", fun = "mean", size = 1) +  # Plot average salary by year
+  geom_smooth(method = "lm", aes(group = experience_level), se = FALSE, linetype = "dashed", size = 1) +  # Add trend lines
+  facet_wrap(~ experience_level, scales = "free_y", ncol = 2) +  # Facets with free y-axis scales and 2 columns
+  labs(
+    title = "Average Salary Over Time by Experience Level with Trend Lines",
+    x = "Work Year",
+    y = "Average Salary (USD)",
+    color = "Experience Level"
+  ) +
+  scale_color_manual(values = c("Entry Level" = "blue", 
+                                "Mid-Level" = "green", 
+                                "Senior Level" = "orange", 
+                                "Executive Level" = "red")) +  # Custom colors for experience levels
+  theme_minimal() +  # Clean theme for better visualization
+  theme(
+    strip.text = element_text(size = 12),   # Adjust size of facet labels
+    strip.background = element_rect(fill = "lightgray"),  # Adjust background of facet labels
+    panel.spacing = unit(1, "lines"),  # Add space between panels
+    axis.text.x = element_text(angle = 45, hjust = 1)  # Rotate x-axis labels for better readability
+  )
 ```

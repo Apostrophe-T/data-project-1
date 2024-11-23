@@ -1,0 +1,312 @@
+---
+title: "MCristinaFernandez.module05RProject"
+author: "M. Cristina Fernandez"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+# The Situation
+
+Your CEO has decided that the company needs a full-time data scientist, and possibly a team of them in the future. 
+She thinks she needs someone who can help drive data science within then entire organization and could potentially lead a team in the future. 
+She understands that data scientist salaries vary widely across the world and is unsure what to pay them. 
+To complicate matters, salaries are going up due to the great recession and the market is highly competitive. 
+Your CEO has asked you to prepare an analysis on data science salaries and provide them with a range to be competitive and get top talent. 
+The position can work offshore, but the CEO would like to know what the difference is for a person working in the United States.
+Your company is currently a small company but is expanding rapidly.
+
+
+```{r}
+require("tidyverse")
+require("dplyr")
+ds_salaries <- read.csv("C:/Users/crisf/OneDrive/Documents/DSE5002/project_1/r project data.csv")
+view(ds_salaries)
+```
+
+I plan on looking up salaries by experience, employment type, company size, and remote ratio to see if/how these factors influence the salary ranges.
+I'm going to want to compare what the avg US-based salaries look like vs non-US based (the employee residence)
+I should see if I can determine any trends over time (perhaps look by year). Get ready for so, so many ggplot graphs.
+
+```{r}
+# First, I want to look at the salaries in USD by experience
+# Just so I remember: EN Entry-level / Junior MI Mid-level / Intermediate SE Senior-level / Expert EX Executive-level
+
+ds_salaries <- ds_salaries %>%
+ mutate(experience_level = factor(recode(experience_level, 
+                                  EN = "Entry Level",     # I wanted to rename these codes so they made sense to me
+                                  MI = "Mid-Level",       # I also looked up how to make sure they showed up in the right order
+                                  SE = "Senior Level", 
+                                  EX = "Executive Level"),
+                              levels = c("Entry Level", "Mid-Level", "Senior Level", "Executive Level")))
+
+salary_by_experience <- ds_salaries %>%
+  group_by(experience_level) %>%
+  summarize(
+    avg_salary = mean(salary_in_usd),
+    median_salary = median(salary_in_usd),
+    min_salary = min(salary_in_usd),
+    max_salary = max(salary_in_usd)
+  )
+
+print(salary_by_experience)
+```
+```{r}
+ggplot(salary_by_experience, aes(x = experience_level, y = avg_salary, fill = experience_level)) +
+  geom_col() +
+  labs(title = "Salary Distribution by Experience Level",
+       x = "Experience Level",
+       y = "Salary (USD)")
+```
+```{r}
+# Next, I want to see whether employment type influences salaries
+# PT Part-time / FT Full-time / CT Contract / FL Freelance
+
+salary_by_employment <- ds_salaries %>%
+  group_by(employment_type) %>%
+  summarize(
+    avg_salary = mean(salary_in_usd),
+    median_salary = median(salary_in_usd),
+    min_salary = min(salary_in_usd),
+    max_salary = max(salary_in_usd)
+  )
+
+print(salary_by_employment)
+```
+```{r}
+ggplot(salary_by_employment, aes(x = employment_type, y = avg_salary, fill = employment_type)) +
+  geom_col() +
+  labs(title = "Salary Distribution by Employment Type",
+       x = "Employment Type",
+       y = "Salary (USD)")
+```
+```{r}
+# How might the size of the company influence salaries?
+
+salary_by_company_size <- ds_salaries %>%
+  group_by(company_size) %>%
+  summarize(
+    avg_salary = mean(salary_in_usd),
+    median_salary = median(salary_in_usd),
+    min_salary = min(salary_in_usd),
+    max_salary = max(salary_in_usd)
+  )
+
+print(salary_by_company_size)
+```
+```{r}
+ggplot(salary_by_company_size, aes(x = company_size, y = avg_salary, fill = company_size)) +
+  geom_col() +
+  labs(title = "Average Salary by Company Size",
+       x = "Company Size",
+       y = "Salary (USD)")
+```
+
+```{r}
+# What about whether the person works in the office, remotely, or hybrid?
+
+salary_by_remote_ratio <- ds_salaries %>%
+  group_by(remote_ratio) %>%
+  summarize(
+    avg_salary = mean(salary_in_usd),
+    median_salary = median(salary_in_usd),
+    min_salary = min(salary_in_usd),
+    max_salary = max(salary_in_usd)
+  )
+
+print(salary_by_remote_ratio)
+
+```
+```{r}
+ggplot(salary_by_remote_ratio, aes(x = remote_ratio, y = avg_salary, fill = remote_ratio)) +
+  geom_col() +
+  labs(title = "Average Salary by Remote Ratio",
+       x = "Remote Ratio",
+       y = "Salary (USD)")
+
+ggplot(salary_by_remote_ratio, aes(x = remote_ratio, y = avg_salary, fill = remote_ratio)) +
+  geom_col() +
+  geom_point(aes(y = min_salary), color = "yellow") +  
+  geom_point(aes(y = max_salary), color = "green") +  
+  geom_point(aes(y = median_salary), color = "orange") 
+  labs(title = "Average Salary by Remote Ratio with Min, Max, and Median",
+       x = "Remote Ratio (%)",
+       y = "Salary (USD)")
+
+
+# That's not how I thought the salaries would trend!
+```
+```{r}
+# Does employee residence factor into salaries?
+salary_by_residence <- ds_salaries %>%
+  group_by(employee_residence) %>%
+  summarize(
+    avg_salary = mean(salary_in_usd),
+    median_salary = median(salary_in_usd),
+    min_salary = min(salary_in_usd),
+    max_salary = max(salary_in_usd)
+  )
+
+print(salary_by_residence)
+```
+
+```{r}
+ggplot(salary_by_residence, aes(x = employee_residence, y = avg_salary, fill = employee_residence)) +
+  geom_col() +
+  labs(title = "Average Salary by Employee Residence",
+       x = "Employee Residence",
+       y = "Salary (USD)") +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1)) 
+
+#This is an overwhelming plot. I'm going to try something else.
+
+```
+
+```{r}
+# Can I see the top 50 highest-paid people and where they happen to reside, instead?
+
+top_50_salaries <- ds_salaries %>%
+  arrange(desc(salary_in_usd)) %>%
+  head(50) 
+
+ggplot(top_50_salaries, aes(x = reorder(employee_residence, salary_in_usd), y = salary_in_usd, fill = employee_residence)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Highest Salaries by Employee Residence",
+       x = "Employee Residence",
+       y = "Salary (USD)")
+
+#I don't think I gleaned anything useful from this, but I'll keep it in here, just the same.
+
+```
+```{r}
+# Looking at just the countries with the highest average salary
+
+top_10_salaries <- salary_by_residence %>%
+  arrange(desc(avg_salary)) %>%
+  head(10)
+
+ggplot(top_10_salaries, aes(x = reorder(employee_residence, avg_salary), y = avg_salary, fill = employee_residence)) +
+  geom_col() +
+  labs(title = "Top 10 Countries with the Highest Average Salary",
+       x = "Employee Residence",
+       y = "Salary (USD)")
+```
+```{r}
+# Now I'm just being nosy
+
+btm_10_salaries <- salary_by_residence %>%
+  arrange(avg_salary) %>%
+  head(10)
+
+ggplot(btm_10_salaries, aes(x = reorder(employee_residence, avg_salary), y = avg_salary, fill = employee_residence)) +
+  geom_col() +
+  labs(title = "Countries with the Lowest Average Salary",
+       x = "Employee Residence",
+       y = "Salary (USD)")
+```
+
+
+```{r}
+# I want to see how US salaries compared with non-US salaries overall
+
+us_data <- ds_salaries %>% filter(employee_residence == "US")
+offshore_data <- ds_salaries %>% filter(employee_residence != "US")
+
+us_salary_avg <- mean(us_data$salary_in_usd)
+offshore_salary_avg <- mean(offshore_data$salary_in_usd)
+
+print(us_salary_avg)
+print(offshore_salary_avg)
+```
+
+```{r}
+salary_comparison <- data.frame(      # I asked the internet for help fixing this one up
+  Region = c("US", "Offshore"),
+  Avg_Salary = c(us_salary_avg, offshore_salary_avg)
+)
+
+ggplot(salary_comparison, aes(x = Region, y = Avg_Salary, fill = Region)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Salary Comparison: US vs. Offshore",
+       x = "Region",
+       y = "Average Salary (USD)")
+```
+
+```{r}
+# Does job title make a difference?
+
+salary_by_job_title <- ds_salaries %>%
+  group_by(job_title) %>%
+  summarize(
+    avg_salary = mean(salary_in_usd),
+    median_salary = median(salary_in_usd),
+    min_salary = min(salary_in_usd),
+    max_salary = max(salary_in_usd)
+  )
+
+print(salary_by_job_title)
+```
+
+```{r}
+ggplot(salary_by_job_title, aes(x = job_title, y = avg_salary, fill = job_title)) +
+  geom_col() +
+  labs(title = "Average Salary by Job Title",
+       x = "Job Title",
+       y = "Salary (USD)")
+
+#I can't really tell by this graph
+#Also didn't realize there were so many job titles
+#I think cleaning this data is a little beyond my scope at the moment
+```
+```{r}
+# I asked ChatGPT for alternative ways to display this data
+
+library(knitr)
+kable(salary_by_job_title, caption = "Average Salary by Job Title")
+```
+
+```{r}
+# I want to look at salary trends over time, now that I have a basic idea of how various factors have influenced average salaries
+# This chart calculates the average, median, minimum, and maximum salaries for all individuals in the data frame by the year each salary was paid
+
+salary_by_year <- ds_salaries %>%
+  group_by(work_year) %>%
+  summarize(
+    avg_salary = mean(salary_in_usd),
+    median_salary = median(salary_in_usd),
+    min_salary = min(salary_in_usd),
+    max_salary = max(salary_in_usd)
+  )
+
+print(salary_by_year)
+
+```
+
+```{r}
+ggplot(salary_by_year, aes(x = work_year, y = avg_salary)) +
+  geom_line() +
+  labs(title = "Salary Trends Over Time",
+       x = "Year",
+       y = "Average Salary (USD)")
+
+# and that is a massive leap from 2021 to 2022!
+```
+```{r}
+# I wanted to create a plot that also showed the minimum, maximum, and median salaries, so I consulted about this one
+# The change in average salary doesn't look as severe with this view because of the inclusion of the max salaries
+# There was one individual who make $600k in 2021
+# It is interesting to see that, while the average salaries are highest in 2022, the maximum salaries are the lowest of the 3 years 
+
+ggplot(salary_by_year, aes(x = work_year)) +
+  geom_line(aes(y = avg_salary, color = "Average Salary"), size = 1) +   
+  geom_point(aes(y = min_salary, color = "Min Salary")) + 
+  geom_point(aes(y = max_salary, color = "Max Salary")) +  
+  geom_point(aes(y = median_salary, color = "Median Salary")) + 
+  labs(title = "Salary Trends Over Time",
+       x = "Year",
+       y = "Salary (USD)",
+       color = "Salary Type") +  
+  scale_color_manual(values = c("Average Salary" = "blue", 
+                                "Min Salary" = "orange", 
+                                "Max Salary" = "green", 
+                                "Median Salary" = "purple"))
+```
